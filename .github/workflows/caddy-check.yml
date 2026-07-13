@@ -1,0 +1,40 @@
+name: Check Caddy Updates
+
+on:
+  schedule:
+    - cron: '17 8 * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      latest_version: ${{ steps.check.outputs.latest_version }}
+      needs_update: ${{ steps.check.outputs.needs_update }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get latest Caddy release
+        id: check
+        run: |
+          LATEST=$(gh release view --repo caddyserver/caddy --json tagName -q .tagName | sed 's/^v//')
+          CURRENT=$(jq -r '.artifacts.caddy.version' manifest.json)
+          
+          echo "latest_version=$LATEST" >> $GITHUB_OUTPUT
+          echo "Latest Caddy: $LATEST, Current: $CURRENT"
+          
+          if [ "$LATEST" != "$CURRENT" ]; then
+            echo "needs_update=true" >> $GITHUB_OUTPUT
+          else
+            echo "needs_update=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger build
+        if: steps.check.outputs.needs_update == 'true'
+        run: |
+          gh workflow run caddy-build.yml \
+            -f caddy_version=${{ steps.check.outputs.latest_version }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,75 @@
+name: Build Caddy Binary
+
+on:
+  workflow_dispatch:
+    inputs:
+      caddy_version:
+        description: 'Caddy version (without v prefix)'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goarch: amd64
+            target: linux-amd64
+          - goarch: arm64
+            target: linux-arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Install xcaddy
+        run: go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+
+      - name: Build Caddy
+        run: |
+          xcaddy build v${{ inputs.caddy_version }} \
+            --with github.com/caddy-dns/cloudflare \
+            --output caddy-luddite-${{ inputs.caddy_version }}-${{ matrix.target }}
+        env:
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: '0'
+
+      - name: Compute checksum
+        id: checksum
+        run: |
+          sha256sum caddy-luddite-* > checksums.txt
+          cat checksums.txt
+
+      - name: Upload release asset
+        run: |
+          gh release create caddy-${{ inputs.caddy_version }} \
+            caddy-luddite-${{ inputs.caddy_version }}-${{ matrix.target }} \
+            --title "Caddy ${{ inputs.caddy_version }}" \
+            --notes "Vendored Caddy build v${{ inputs.caddy_version }} with caddy-dns/cloudflare plugin"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update manifest
+        run: |
+          AMD64_CHECKSUM=$(sha256sum caddy-luddite-*-linux-amd64 | cut -d' ' -f1)
+          ARM64_CHECKSUM=$(sha256sum caddy-luddite-*-linux-arm64 | cut -d' ' -f1)
+          
+          jq \
+            --arg version "${{ inputs.caddy_version }}" \
+            --arg upstream "v${{ inputs.caddy_version }}" \
+            --arg amd64 "sha256:$AMD64_CHECKSUM" \
+            --arg arm64 "sha256:$ARM64_CHECKSUM" \
+            --arg url "https://github.com/luddite-dev/vendored/releases/download/caddy-${{ inputs.caddy_version }}/caddy-luddite-${{ inputs.caddy_version }}-linux-{{arch}}" \
+            '.artifacts.caddy.version = $version | .artifacts.caddy.upstream_version = $upstream | .artifacts.caddy.checksums = {"linux-amd64": $amd64, "linux-arm64": $arm64} | .artifacts.caddy.download_url = $url' \
+            manifest.json > manifest.json.tmp
+          mv manifest.json.tmp manifest.json
+
+      - name: Commit manifest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add manifest.json
+          git commit -m "chore: update caddy to v${{ inputs.caddy_version }}"
+          git push

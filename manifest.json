@@ -1,0 +1,10 @@
+{
+  "artifacts": {
+    "caddy": {
+      "version": "",
+      "upstream_version": "",
+      "checksums": {},
+      "download_url": ""
+    }
+  }
+}
