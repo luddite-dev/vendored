@@ -7,7 +7,7 @@
         "linux-amd64": "sha256:7d24926a2f36d0a84700425c76cf8f9b742b46c390601950593c6258d78bfb1e",
         "linux-arm64": "sha256:ff429d9de9e73f10dc5e6e669733ec074e5e43b7ea3a5ddce2d75a462e7e411b"
       },
-      "download_url": "https://github.com/luddite-dev/vendored/releases/download/caddy-2.11.4/caddy-luddite-2.11.4-linux-{{arch}}"
+      "download_url": "https://github.com/luddite-dev/vendored/releases/download/caddy-2.11.4/caddy-luddite-2.11.4-{{arch}}"
     }
   }
 }
