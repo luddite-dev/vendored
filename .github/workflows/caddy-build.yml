@@ -36,26 +36,48 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: '0'
 
-      - name: Compute checksum
-        id: checksum
-        run: |
-          sha256sum caddy-luddite-* > checksums.txt
-          cat checksums.txt
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: caddy-${{ matrix.target }}
+          path: caddy-luddite-${{ inputs.caddy_version }}-${{ matrix.target }}
 
-      - name: Upload release asset
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: binaries
+          pattern: caddy-*
+          merge-multiple: true
+
+      - name: Create release with all binaries
         run: |
           gh release create caddy-${{ inputs.caddy_version }} \
-            caddy-luddite-${{ inputs.caddy_version }}-${{ matrix.target }} \
+            binaries/caddy-luddite-* \
             --title "Caddy ${{ inputs.caddy_version }}" \
             --notes "Vendored Caddy build v${{ inputs.caddy_version }} with caddy-dns/cloudflare plugin"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update manifest
+      - name: Compute checksums and update manifest
         run: |
+          cd binaries
           AMD64_CHECKSUM=$(sha256sum caddy-luddite-*-linux-amd64 | cut -d' ' -f1)
           ARM64_CHECKSUM=$(sha256sum caddy-luddite-*-linux-arm64 | cut -d' ' -f1)
-          
+          cat <<EOF > ../checksums.txt
+          $AMD64_CHECKSUM  caddy-luddite-${{ inputs.caddy_version }}-linux-amd64
+          $ARM64_CHECKSUM  caddy-luddite-${{ inputs.caddy_version }}-linux-arm64
+          EOF
+          cat ../checksums.txt
+          cd ..
+
           jq \
             --arg version "${{ inputs.caddy_version }}" \
             --arg upstream "v${{ inputs.caddy_version }}" \
@@ -70,6 +92,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add manifest.json
+          git add manifest.json checksums.txt
           git commit -m "chore: update caddy to v${{ inputs.caddy_version }}"
           git push
