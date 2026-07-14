@@ -16,7 +16,7 @@ jobs:
       latest_version: ${{ steps.check.outputs.latest_version }}
       needs_update: ${{ steps.check.outputs.needs_update }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Get latest Caddy release
         id: check
