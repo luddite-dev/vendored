@@ -83,7 +83,7 @@ jobs:
             --arg upstream "v${{ inputs.caddy_version }}" \
             --arg amd64 "sha256:$AMD64_CHECKSUM" \
             --arg arm64 "sha256:$ARM64_CHECKSUM" \
-            --arg url "https://github.com/luddite-dev/vendored/releases/download/caddy-${{ inputs.caddy_version }}/caddy-luddite-${{ inputs.caddy_version }}-linux-{{arch}}" \
+            --arg url "https://github.com/luddite-dev/vendored/releases/download/caddy-${{ inputs.caddy_version }}/caddy-luddite-${{ inputs.caddy_version }}-{{arch}}" \
             '.artifacts.caddy.version = $version | .artifacts.caddy.upstream_version = $upstream | .artifacts.caddy.checksums = {"linux-amd64": $amd64, "linux-arm64": $arm64} | .artifacts.caddy.download_url = $url' \
             manifest.json > manifest.json.tmp
           mv manifest.json.tmp manifest.json
