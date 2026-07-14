@@ -1,0 +1,2 @@
+c32801802b4dceb54a1af7c61502087a2ffe12e4adc7fdd564098a6c90bd137c  caddy-luddite-2.9.1-linux-amd64
+ca22914e248ed53d4d7b73bd8290b5f269e7c52d2fc2c2473a5e1db66bdbe138  caddy-luddite-2.9.1-linux-arm64
