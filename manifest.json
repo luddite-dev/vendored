@@ -1,10 +1,13 @@
 {
   "artifacts": {
     "caddy": {
-      "version": "",
-      "upstream_version": "",
-      "checksums": {},
-      "download_url": ""
+      "version": "2.9.1",
+      "upstream_version": "v2.9.1",
+      "checksums": {
+        "linux-amd64": "sha256:c32801802b4dceb54a1af7c61502087a2ffe12e4adc7fdd564098a6c90bd137c",
+        "linux-arm64": "sha256:"
+      },
+      "download_url": "https://github.com/luddite-dev/vendored/releases/download/caddy-2.9.1/caddy-luddite-2.9.1-linux-{{arch}}"
     }
   }
 }
